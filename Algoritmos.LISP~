@@ -166,14 +166,12 @@ NÃ³ - (pontos posCavalo tabela profundidade pai heuristica)
 
 ;; Nó -  (pontos1 pontos2 position table profundidade jogador-max pai heuristica)
 
-;(minmax (no-teste5) 2 *jogador1*)
+;(minmax (no-teste4) 2 *jogador1*)
 (defun minmax (node profundidade-max jogador-max)
   (format t "Profundidade: ~A~%" (fifth node))
   (format t "Jogador: ~A~%" (sixth node))
   (format t "Pontuação1: ~A~%" (first node))
   (format t "Pontuação2: ~A~%" (second node))
-  (format t "Heurística: ~A~%" (heuristic-minmax node))
-  (format t "Melhor Nó: ~A~%" *jogada*)
   (format t "Pai: ~A~%" (seventh node))
   (format t "\n")
   (printTable (fourth node))
@@ -196,38 +194,6 @@ NÃ³ - (pontos posCavalo tabela profundidade pai heuristica)
 )
 
 
-
-(defun minmax-max (sucessores profundidade-max jogador-max)
-  (let ((result (max-value-recursive sucessores profundidade-max jogador-max (cons nil (list most-negative-fixnum)))))
-    (setf *jogada* (car result))
-    (cdr result)))
-
-
-(defun max-value-recursive (sucessores profundidade-max jogador-max current-max-pair)
-  (if (null sucessores)
-      current-max-pair
-      (let ((child-result (minmax (first sucessores) profundidade-max (not jogador-max))))
-        (if (> (cdr child-result) (cdr current-max-pair))
-            (max-value-recursive (rest sucessores) profundidade-max jogador-max child-result)
-            (max-value-recursive (rest sucessores) profundidade-max jogador-max current-max-pair)))))
-
-
-(defun minmax-min (sucessores profundidade-max jogador-max)
-  (let ((result (min-value-recursive sucessores profundidade-max jogador-max (cons nil (list most-positive-fixnum)))))
-    (setf *jogada* (car result))
-    (cdr result)))
-
-
-(defun min-value-recursive (sucessores profundidade-max jogador-max current-min-pair)
-  (if (null sucessores)
-      current-min-pair
-      (let ((child-result (minmax (first sucessores) profundidade-max (not jogador-max))))
-        (if (< (cdr child-result) (cdr current-min-pair))
-            (min-value-recursive (rest sucessores) profundidade-max jogador-max child-result)
-            (min-value-recursive (rest sucessores) profundidade-max jogador-max current-min-pair)))))
-
-#|
-
 (defun minmax-max (sucessores profundidade-max jogador-max)
   (max-value-recursive sucessores profundidade-max jogador-max *minimum-value*))
 
@@ -246,7 +212,7 @@ NÃ³ - (pontos posCavalo tabela profundidade pai heuristica)
       (let ((child-value (minmax (first sucessores) profundidade-max (not jogador-max))))
         (min-value-recursive (rest sucessores) profundidade-max jogador-max (min child-value current-min)))))
 
-|#
+
 ;(defun minmax-max (sucessores profundidade-max jogador-max)
 ;  ()
 ;)

@@ -5,13 +5,6 @@
 (defpackage "Logic")
 
 
-;;;;
-;;;; Constantes:
-;;;;
-(defvar *jogador1* 1)
-(defvar *jogador2* 2)
-
-
 (defun startAlgorithms (problem algorithms)
  (cond 
   ((null algorithms) nil)
@@ -414,53 +407,3 @@ Section 9.4, Numerical Recipes, Second Edition"
       (if (< f-new 0.0)
         (setf x-low rtsafe)
         (setf x-high rtsafe)))))
-
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;; FASE2  ;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
-(defun trocar-jogador (jogador)
-  "Troca a peca de um jogador para a peca de outro jogador."
-  (- 3 jogador)
-)
-
-;;Representação de um nó
-; Contém 1- Tabuleiro 
-;        2- Jogador Max 
-;        3- Resultado do jogador Max 
-;        4- Profundidade máxima
-(defun node (table jogador-max score max-depth )
- (list table jogador-max score max-depth))
-)
-
-(defun successors (node funcs &optional (maxDepth 100) (heur nil))
- (cond
-
-  ((null (second node)) (remove-if #'null (firstsuccessors node heur)))
-  ((> (1+ (fourth node)) maxdepth) nil)
-  (t (remove-if #'null (successors-rec node funcs maxdepth heur))
-  )
- )
-)
-
-
-(defun successors-new (node funcs &optional (maxDepth 100))
-  (cond
-    ((tabuleiro-preenchido (first node)) nil)
-    ((> (1+ (second node)) maxDepth) nil)
-    (t (remove-if #'null (successors-rec-new node funcs maxDepth )))
-  )
-)
-
-(defun successors-rec-new (node funcs &optional (maxDepth 100) (heur nil))
- (cond
-  ((null funcs) nil)
-  (t
-   (cons (apply (car funcs) (list node heur)) (successors-rec node (cdr funcs) maxdepth heur))
-  )
- ) 
-)
-
