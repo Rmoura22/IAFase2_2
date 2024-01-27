@@ -258,8 +258,14 @@
  ******************** HeurÃ­sticas ********************
 |#
 ;; Nó -  (pontos1 pontos2 position table profundidade jogador-max pai heuristica)
-(defun heuristic-minmax (node)
-  (- (first node) (second node))
+;Função retorna o valor da heuristica da função de avaliação do minmax
+(defun heuristic-minmax (node jogador-max)
+  (cond
+    ;JogadorMax é o Jogador1
+    ((eq jogador-max *jogador1*) (- (first node) (second node)))
+    ;JogadorMax é o Jogador2
+    (t (- (second node) (first node)))
+  )
 )
 
 

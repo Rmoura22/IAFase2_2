@@ -242,21 +242,6 @@ NÃ³ - (pontos posCavalo tabela profundidade pai heuristica)
 
 ;(alfa-beta (no-teste5) 3 *jogador1*)
 (defun alfa-beta (node profundidade-max jogador-max timestamps &optional (alfa *minimum-value*) (beta *maximum-value*) (stats '(0 0 0 0 0)))
-  (let* ((result (cond
-    ((or (eq (fifth node) profundidade-max) 
-         (null (successors node (get-operators) profundidade-max nil))
-         (has-passed-90-percent (first timestamps) (second timestamps)))               ;Nó raiz ou folha
-                            (heuristic-minmax node))  ; (cons node (heuristic-minmax node)))   (heuristic-minmax node))
-    (t (let ((sucessores (ordenar (successors node (get-operators) profundidade-max nil) (sixth node) jogador-max))) ; (ordenar (|# successors node (get-operators) profundidade-max nil #|) (sixth node) jogador-max)
-                         
-                         (cond
-                           ((eq (sixth node) jogador-max)                             ;Nó Max
-                                (alfa-beta-max sucessores profundidade-max 
-                                               jogador-max timestamps alfa beta (update-stats stats '(0 1 0 0 0))))   
-                           (t                                                         ;Nó Min
-                                (alfa-beta-min sucessores profundidade-max 
-                                               jogador-max timestamps alfa beta (update-stats stats '(0 1 0 0 0))))))
-  ))))
   (format t "Profundidade: ~A~%" (fifth node))
   (format t "Jogador: ~A~%" (sixth node))
   (format t "Pontuação1: ~A~%" (first node))
@@ -271,6 +256,23 @@ NÃ³ - (pontos posCavalo tabela profundidade pai heuristica)
   (format t "Nós cortes-beta: ~A~%" (fifth stats))
   (printTable (fourth node))
   (format t "\n")
+  (let* ((result (cond
+    ((or (eq (fifth node) profundidade-max)
+         (null node) 
+         (null (successors node (get-operators) profundidade-max nil))
+         (has-passed-90-percent (first timestamps) (second timestamps)))               ;Nó raiz ou folha
+                            (heuristic-minmax node))  ; (cons node (heuristic-minmax node)))   (heuristic-minmax node))
+    (t (let ((sucessores (order-nodes (successors node (get-operators) profundidade-max nil) (sixth node) jogador-max))) ; (ordenar (|# successors node (get-operators) profundidade-max nil #|) (sixth node) jogador-max)
+                         
+                         (cond
+                           ((eq (sixth node) jogador-max)                             ;Nó Max
+                                (alfa-beta-max sucessores profundidade-max 
+                                               jogador-max timestamps alfa beta (update-stats stats '(0 1 0 0 0))))   
+                           (t                                                         ;Nó Min
+                                (alfa-beta-min sucessores profundidade-max 
+                                               jogador-max timestamps alfa beta (update-stats stats '(0 1 0 0 0))))))
+  ))))
+  
   result)
 )
 
@@ -285,7 +287,7 @@ NÃ³ - (pontos posCavalo tabela profundidade pai heuristica)
              (profundidade (fifth (first sucessores))) ;varriável para teste
              (novo-alfa (max alfa child-result)))
         (cond 
-          ((>= novo-alfa beta) 
+          ((> novo-alfa beta) 
               (setf *cortes-alfa* (+ *cortes-alfa* 1))
               (update-stats stats '(0 0 0 1 0))
               beta)
@@ -307,7 +309,7 @@ NÃ³ - (pontos posCavalo tabela profundidade pai heuristica)
              (profundidade (fifth (first sucessores))) ;varriável para teste
              (novo-beta (min beta child-result)))
          (cond 
-           ((<= novo-beta alfa)  
+           ((< novo-beta alfa)  
                (setf *cortes-beta* (+ *cortes-beta* 1))
                (update-stats stats '(0 0 0 0 1))    
                alfa)
@@ -383,32 +385,23 @@ NÃ³ - (pontos posCavalo tabela profundidade pai heuristica)
                 (< (terceiro a) (terceiro b)))))) ; Ordene por valor crescente
 
 
-(defun order-Nodes (nos jogador-max jogador)
-  (cond
-    (eq jogador-max jogador)
-    (t ) 
-  )
-)
-
 (defun max-node-sort (nodes)
   "Retorna uma lista de nós ordenados por heuristica decrescente"
   (cond
     ((null nodes) nil)
-    (let* ((max-node (find-max-node nodes)))
-           (rest-nodes (remove max-node nodes))
-      (append max-node
-             (max-node-sort rest-nodes))
-    )
-  )
+    (t (let* ((min-node (find-min-node nodes))
+           (rest-nodes (remove min-node nodes)))
+      (append  (list min-node) (max-node-sort rest-nodes)
+             ))))
 )
 
-(defun max-node (nodes)
+(defun find-max-node (nodes)
   "Encontra o nó com melhor heuristica na lista de nós"
-  (reduce #'(lambda (a b
+  (reduce #'(lambda (a b)
               (if (> (heuristic-minmax a) (heuristic-minmax b))
                 a
                 b))
-          nodes))
+          nodes)
 )
 
 
@@ -416,63 +409,19 @@ NÃ³ - (pontos posCavalo tabela profundidade pai heuristica)
   "Retorna uma lista de nós ordenados por heuristica crescente"
   (cond
     ((null nodes) nil)
-    (let* ((min-node (find-max-node nodes)))
-           (rest-nodes (remove min-node nodes))
-      (append min-node
-             (min-node-sort rest-nodes))
-    )
-  )
+    (t (let* ((max-node (find-max-node nodes))
+           (rest-nodes (remove max-node nodes)))
+      (append  (list max-node) (min-node-sort rest-nodes)
+             ))))
 )
 
-(defun min-node (nodes)
+(defun find-min-node (nodes)
   "Encontra o nó com pior heuristica na lista de nós"
-  (reduce #'(lambda (a b
+  (reduce #'(lambda (a b)
               (if (< (heuristic-minmax a) (heuristic-minmax b))
                 a
                 b))
-          nodes))
-)
-
-
-
-(defun ordenar ( sucessores jogador jogadorMax )
-"Devolve a lista de  ordenada a partir da funçao quicksort"
-(cond
-((eq jogador jogadorMax)  (quicksort1 sucessores ))
-(t  (quicksort2 sucessores ))))
-
-
-
-
-
-(defun quicksort1 (no)
-  "Algoritmo quicksort de ordenação no nó max  "
-  (cond 
-   ((null no) nil)
-   (t (let*((x     (car no))
-            (resto (cdr no))
-            (f     (lambda (a) (< (heuristic-minmax a) (heuristic-minmax x)))))
-        (append (quicksort1 (remove-if-not f resto))
-                (list x)
-                (quicksort1 (remove-if f resto)))))))
-
-(defun quicksort2 (no)
-  "Algoritmo quicksort de ordenação no nó min  "
-  (cond 
-   ((null no) nil)
-   (t (let*((x     (car no))
-            (resto (cdr no))
-            (f     (lambda (a) (> (heuristic-minmax a) (heuristic-minmax x)))))
-        (append (quicksort2 (remove-if-not f resto))
-                (list x)
-                (quicksort2 (remove-if f resto)))))))
-
-(defun insertOrderedDecHeuristic (Node Nodes)
- (cond 
-  ((null Nodes) (list Node))
-  ((< (sixth Node) (sixth (car Nodes))) (cons Node Nodes))
-  (t (cons (first Nodes) (insertOrderedDecHeuristic Node (cdr Nodes))))
- )
+          nodes)
 )
 
 

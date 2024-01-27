@@ -8,7 +8,7 @@
 ;;;;
 (defvar *jogador1* -1)
 (defvar *jogador2* -2)
-(defvar *jogada* )
+(defvar *jogada* nil)
 
 
 

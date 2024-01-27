@@ -163,8 +163,7 @@ NÃ³ - (pontos posCavalo tabela profundidade pai heuristica)
 
 (defvar *maximum-value* 10000)
 (defvar *minimum-value* -10000)
-(defvar *cortes-alfa* 0)
-(defvar *cortes-beta* 0)
+
 
 ;; Nó -  (pontos1 pontos2 position1 table profundidade curJogador pai heuristica position2)
 
@@ -332,33 +331,6 @@ NÃ³ - (pontos posCavalo tabela profundidade pai heuristica)
   (setf *cortes-beta* 0)
 )
 
-#|
-
-(defun minmax-max (sucessores profundidade-max jogador-max)
-  (max-value-recursive sucessores profundidade-max jogador-max *minimum-value*))
-
-(defun max-value-recursive (sucessores profundidade-max jogador-max current-max)
-  (if (null sucessores)
-      current-max
-      (let ((child-value (minmax (first sucessores) profundidade-max (not jogador-max))))
-        (max-value-recursive (rest sucessores) profundidade-max jogador-max (max child-value current-max)))))
-
-(defun minmax-min (sucessores profundidade-max jogador-max)
-  (min-value-recursive sucessores profundidade-max jogador-max *maximum-value*))
-
-(defun min-value-recursive (sucessores profundidade-max jogador-max current-min)
-  (if (null sucessores)
-      current-min
-      (let ((child-value (minmax (first sucessores) profundidade-max (not jogador-max))))
-        (min-value-recursive (rest sucessores) profundidade-max jogador-max (min child-value current-min)))))
-
-|#
-;(defun minmax-max (sucessores profundidade-max jogador-max)
-;  ()
-;)
-
-;(defun minmax-min (sucessores profundidade-max jogador-max))
-
 
 #|
  ******************** Statistics ********************
@@ -376,14 +348,12 @@ NÃ³ - (pontos posCavalo tabela profundidade pai heuristica)
   )
 )
 
-(defun ordenar-nos-alfa-beta (lista-de-nos jogador-max)
-  "Função para ordenar nós no Alfa-Beta com base no jogador (Max ou Min)."
-  (sort lista-de-nos
-        #'(lambda (a b)
-            (if (eql jogador-max 'Max) ; Verifique se o jogador atual é Max
-                (> (terceiro a) (terceiro b)) ; Ordene por valor decrescente
-                (< (terceiro a) (terceiro b)))))) ; Ordene por valor crescente
-
+(defun order-nodes (nodes jogador-max jogador)
+  (cond
+    ((eq jogador-max jogador) (max-node-sort nodes))
+    (t (min-node-sort nodes))
+  )
+)
 
 (defun max-node-sort (nodes)
   "Retorna uma lista de nós ordenados por heuristica decrescente"
