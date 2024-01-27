@@ -1,92 +1,30 @@
-#|
-Implementação dos métodos de procura e com a implementação das métricas de
-análise de eficiência, i.e. a parte do programa que é independente do domínio de aplicação
-Nó - (pontos posCavalo tabela profundidade pai heuristica)
-|#
+;; N� -  (pontos1 pontos2 position1 table profundidade curJogador pai heuristica position2)
 
-(defpackage "Algorithms")
+;(minmax (no-teste5) 2 *jogador1*)
+;(minmax (no-teste5) 3 *jogador1*)
 
-;(bfs1 (no-teste2) 'issolution (get-operators))
-(defun BFS1 (root pred operators objective)
- ""
- ;openList - Lista de abertos
- ;closedList - Lista de fechados
- ;sucs - Sucessores, é atualizado em BFS-rec
- ;solution - Resultado da função any, se nil então ainda não encontrou solução
-  (let* ((openList (list root)) (closedList nil) (sucs nil) (solution nil))
-   (labels (
-    (BFS-rec ()
-     (cond 
-      ((null openList) "This shit aint work")
-      ;((node-exists (car openList) closedList 'bfs) ())
-      (t
-        (setf sucs (remove-if #'null (funcall 'successors (car openList) operators)))
-        (setf solution (any pred sucs objective))
-        (cons (car openList) closedList)
-        (setf openList (appendToOpenList sucs (cdr openList) closedList 'bfs))
-        (if solution 
-         solution 
-         (BFS-rec)
-        )
-      )
-     )
-    ))
-   (BFS-rec)
-   )
-  ) 
-)
-
-;(bfs2 (no-teste2) 'issolution 'successors (get-operators))
-(defun BFS (root pred sucFunc operators objective &optional (openList (list root)) (closedList nil))
-  (cond 
-      ;Se lita de abertos vazia falha
-   ((null openList) "No Solution found :(((")
-   ; Gerar sucessores e verificar se algum é solução
-   (t (let* ((sucs (funcall sucFunc (car openList) operators)) (solution (any pred sucs objective)))
-        (cond   
-           ;Se algum é solução retorna      
-         ((not (null solution)) (list solution openList closedList))
-           ;Se não encontrou solução adiciona os sucessores a lista de abertos e repete
-         (t (BFS root pred sucFunc operators objective (append (cdr openList) sucs) (cons (car openList) closedList)))
-         )
-        )
-      )
-   )
-)
-
-;(dfs (no-teste2) 'issolution 'successors (get-operators) :maxDepth 40)
-(defun DFS (root pred sucFunc operators objective &optional (openList (list root)) (closedList nil) (maxDepth 10))
-  (cond 
-      ;Se lita de abertos vazia falha
-   ((null openList) "No Solution found :(((")
-   ; Gerar sucessores e verificar se algum é solução
-   (t (let* ((sucs (funcall sucFunc (car openList) operators maxDepth)) (solution (any pred sucs)))
-        (cond   
-           ;Se algum é solução retorna      
-         ((not (null solution)) solution)
-           ;Se não encontrou solução adiciona os sucessores ao inicio da lista de abertos e repete
-         (t (DFS root pred sucFunc operators objective (append sucs (cdr openList)) (cons (car openList) closedList)))
-        )
-      )
-   )
-  )
-)
-
-;(a-star (no-teste2) 'issolution 'successors (get-operators) 'calcheuristic)
-(defun A-Star (root predFunc sucFunc operators heuristicFunc objective &optional (openList (list root)) (closedList nil))
- (cond
-  ((null openList) "Keine Lösung gefunden")
-  (t (let* ((sucs (funcall sucFunc (car openList) operators 100 heuristicfunc)) (solution (any predFunc sucs)))
-
-       (cond   
-           ;Se algum é solução retorna      
-         ((not (null solution)) solution)
-           ;Se não encontrou solução adiciona os sucessores ao inicio da lista de abertos e repete
-         (t (A-Star root predFunc sucFunc operators heuristicfunc (appendToOpenList sucs (cdr openList) (cons (car openList) closedList) 'aStar) (cons (car openList) closedList)))
-        )
-      )
-  )
- )
+(defun minmax (node profundidade-max jogador-max)
+  (format t "Profundidade: ~A~%" (fifth node))
+  (format t "Jogador: ~A~%" (sixth node))
+  (format t "Pontua��o1: ~A~%" (first node))
+  (format t "Pontua��o2: ~A~%" (second node))
+  (format t "Heur�stica: ~A~%" (heuristic-minmax node))
+  (format t "Melhor N�: ~A~%" *jogada*)
+  (format t "Pai: ~A~%" (seventh node))
+  (format t "\n")
+  (printTable (fourth node))
+  (let ((result (cond 
+    ((or (eq (fifth node) profundidade-max) 
+         (null (successors node (get-operators) profundidade-max nil)))               ;N� raiz ou folha
+                            (heuristic-minmax node))  ; (cons node (heuristic-minmax node)))   (heuristic-minmax node))
+    (t (let ((sucessores (successors node (get-operators) profundidade-max nil)))
+                         (cond
+                           ((eq (sixth node) jogador-max)                             ;N� Max
+                                (minmax-max sucessores profundidade-max jogador-max))   
+                           (t                                                         ;N� Min
+                                (minmax-min sucessores profundidade-max jogador-max))))))))
+  
+  result)
 )
 
 (defun insertOrderedDecHeuristic (Node Nodes)
@@ -166,34 +104,7 @@ Nó - (pontos posCavalo tabela profundidade pai heuristica)
 (defvar *cortes-alfa* 0)
 (defvar *cortes-beta* 0)
 
-;; N� -  (pontos1 pontos2 position1 table profundidade curJogador pai heuristica position2)
 
-;(minmax (no-teste5) 2 *jogador1*)
-;(minmax (no-teste5) 3 *jogador1*)
-
-(defun minmax (node profundidade-max jogador-max)
-  (format t "Profundidade: ~A~%" (fifth node))
-  (format t "Jogador: ~A~%" (sixth node))
-  (format t "Pontua��o1: ~A~%" (first node))
-  (format t "Pontua��o2: ~A~%" (second node))
-  (format t "Heur�stica: ~A~%" (heuristic-minmax node))
-  (format t "Melhor N�: ~A~%" *jogada*)
-  (format t "Pai: ~A~%" (seventh node))
-  (format t "\n")
-  (printTable (fourth node))
-  (let ((result (cond 
-    ((or (eq (fifth node) profundidade-max) 
-         (null (successors node (get-operators) profundidade-max nil)))               ;N� raiz ou folha
-                            (heuristic-minmax node))  ; (cons node (heuristic-minmax node)))   (heuristic-minmax node))
-    (t (let ((sucessores (successors node (get-operators) profundidade-max nil)))
-                         (cond
-                           ((eq (sixth node) jogador-max)                             ;N� Max
-                                (minmax-max sucessores profundidade-max jogador-max))   
-                           (t                                                         ;N� Min
-                                (minmax-min sucessores profundidade-max jogador-max))))))))
-  
-  result)
-)
 
 ;(minmax-test (minmax (no-teste5) 3 *jogador1*))
 (defun minmax-test (function)

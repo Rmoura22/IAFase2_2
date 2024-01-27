@@ -1,8 +1,4 @@
 
-
-(defpackage "Logic")
-
-
 ;;;;
 ;;;; Constantes:
 ;;;;
