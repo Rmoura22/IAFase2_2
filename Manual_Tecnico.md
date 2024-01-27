@@ -147,7 +147,6 @@ Os movimentos são feitos pelas linhas e colunas, x e y para simplificar.
   )
  )
 )
-
 ```
 
 ### Sucessores
