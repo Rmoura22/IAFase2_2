@@ -8,7 +8,8 @@
 ;;;;
 (defvar *jogador1* -1)
 (defvar *jogador2* -2)
-(defvar *jogada*     )
+(defvar *jogada* )
+
 
 
 ;--------------------- OPERADORES -----------------------
@@ -32,35 +33,59 @@
 )
 
 (defun Operator1 (node &optional (heur nil))
- (move node (+ (horsePosLine (third node)) 1) (+ (horsePosColumn (third node)) 2) 'operator1 heur)
+  (let ((posicao-jogador (if (eq (sixth node) -1) 
+                           (third node) 
+                           (ninth node))))
+  (move node (+ (horsePosLine posicao-jogador) 1) (+ (horsePosColumn posicao-jogador) 2) 'operator1 heur))
 )
 
 (defun Operator2 (node &optional (heur nil))
- (move node (+ (horsePosLine (third node)) 1) (+ (horsePosColumn (third node)) -2)'operator2 heur)
+  (let ((posicao-jogador (if (eq (sixth node) -1) 
+                           (third node) 
+                           (ninth node))))
+  (move node (+ (horsePosLine posicao-jogador) 1) (+ (horsePosColumn posicao-jogador) -2)'operator2 heur))
 )
 
 (defun Operator3 (node &optional (heur nil))
- (move node (+ (horsePosLine (third node)) 2) (+ (horsePosColumn (third node)) 1)'operator3 heur)
+  (let ((posicao-jogador (if (eq (sixth node) -1) 
+                           (third node) 
+                           (ninth node))))
+  (move node (+ (horsePosLine posicao-jogador) 2) (+ (horsePosColumn posicao-jogador) 1)'operator3 heur))
 )
 
 (defun Operator4 (node &optional (heur nil))
- (move node (+ (horsePosLine (third node)) 2) (+ (horsePosColumn (third node)) -1)'operator4 heur)
+  (let ((posicao-jogador (if (eq (sixth node) -1) 
+                           (third node) 
+                           (ninth node))))
+  (move node (+ (horsePosLine posicao-jogador) 2) (+ (horsePosColumn posicao-jogador) -1)'operator4 heur))
 )
 
 (defun Operator5 (node &optional (heur nil))
- (move node (+ (horsePosLine (third node)) -1) (+ (horsePosColumn (third node)) -2)'operator5 heur)
+  (let ((posicao-jogador (if (eq (sixth node) -1) 
+                           (third node) 
+                           (ninth node))))
+  (move node (+ (horsePosLine posicao-jogador) -1) (+ (horsePosColumn posicao-jogador) -2)'operator5 heur))
 )
 
 (defun Operator6 (node &optional (heur nil))
- (move node (+ (horsePosLine (third node)) -1) (+ (horsePosColumn (third node)) 2)'operator6 heur)
+  (let ((posicao-jogador (if (eq (sixth node) -1) 
+                           (third node) 
+                           (ninth node))))
+  (move node (+ (horsePosLine posicao-jogador) -1) (+ (horsePosColumn posicao-jogador) 2)'operator6 heur))
 )
 
 (defun Operator7 (node &optional (heur nil))
- (move node (+ (horsePosLine (third node)) -2) (+ (horsePosColumn (third node)) -1)'operator7 heur)
+  (let ((posicao-jogador (if (eq (sixth node) -1) 
+                           (third node) 
+                           (ninth node))))
+  (move node (+ (horsePosLine posicao-jogador) -2) (+ (horsePosColumn posicao-jogador) -1)'operator7 heur))
 )
 
 (defun Operator8 (node &optional (heur nil))
- (move node (+ (horsePosLine (third node)) -2) (+ (horsePosColumn (third node)) 1)'operator8 heur)
+  (let ((posicao-jogador (if (eq (sixth node) -1) 
+                           (third node) 
+                           (ninth node))))
+  (move node (+ (horsePosLine posicao-jogador) -2) (+ (horsePosColumn posicao-jogador) 1)'operator8 heur))
 )
 
 
@@ -72,19 +97,27 @@
  (let ((points (cel (fourth node) line column)))
   (cond
    ((null points) nil)
-   (t (let ((newNode (list 
-           (+ (first node)  points)
-           (second node) 
-           (if (eq (sixth node) -1) (list line column)
-               (t (third node))
+   (t (let ((newNode (list
+           (if (eq (sixth node) -1) 
+               (+ (first node)  points)
+               (first node)
+           )
+           (if (eq (sixth node) -2) 
+                (+ (second node)  points)
+                (second node)
+           ) 
+           (if (eq (sixth node) -1) 
+               (list line column)
+               (third node)
            )
            (removeOther (replaceInTableIndex (fourth node) line column (sixth node)) points)
            (1+ (fifth node))
            (trocar-jogador (sixth node))
            (append (seventh node) (list name))
            nil
-            (if (eq (sixth node) -2) (list line column)
-               (t (ninth node))
+           (if (eq (sixth node) -2) 
+                (list line column)
+                (ninth node)
            )
          )))
         (if (null heur) newNode (funcall heur newNode 400))
@@ -292,4 +325,8 @@
   (list 0 0 '(0 0) (tabuleiro-teste2) 0 *jogador1* nil nil)
 )
 
+; (successors (no-teste5) (get-operators) 5)
+(defun no-teste5 ()
+  (list 0 0 '(0 0) (tabuleiro-teste2) 0 *jogador1* nil nil '(9 5))
+)
 

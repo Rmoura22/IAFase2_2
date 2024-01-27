@@ -164,9 +164,11 @@ NÃ³ - (pontos posCavalo tabela profundidade pai heuristica)
 (defvar *maximum-value* 10000)
 (defvar *minimum-value* -10000)
 
-;; Nó -  (pontos1 pontos2 position table profundidade jogador-max pai heuristica)
+;; Nó -  (pontos1 pontos2 position1 table profundidade curJogador pai heuristica position2)
 
 ;(minmax (no-teste5) 2 *jogador1*)
+;(minmax (no-teste5) 3 *jogador1*)
+
 (defun minmax (node profundidade-max jogador-max)
   (format t "Profundidade: ~A~%" (fifth node))
   (format t "Jogador: ~A~%" (sixth node))
@@ -177,54 +179,121 @@ NÃ³ - (pontos posCavalo tabela profundidade pai heuristica)
   (format t "Pai: ~A~%" (seventh node))
   (format t "\n")
   (printTable (fourth node))
-  (cond 
+  (let ((result (cond 
     ((or (eq (fifth node) profundidade-max) 
          (null (successors node (get-operators) profundidade-max nil)))               ;Nó raiz ou folha
-                            (heuristic-minmax node)) 
+                            (heuristic-minmax node))  ; (cons node (heuristic-minmax node)))   (heuristic-minmax node))
     (t (let ((sucessores (successors node (get-operators) profundidade-max nil)))
                          (cond
                            ((eq (sixth node) jogador-max)                             ;Nó Max
-                                (minmax-max sucessores profundidade-max jogador-max)
-                           )   
+                                (minmax-max sucessores profundidade-max jogador-max))   
                            (t                                                         ;Nó Min
-                                (minmax-min sucessores profundidade-max jogador-max)
-                           )   
-                         )
-       )
-    )                                         
-  )
+                                (minmax-min sucessores profundidade-max jogador-max))))))))
+  
+  result)
+)
+
+;(minmax-test (minmax (no-teste5) 3 *jogador1*))
+(defun minmax-test (function)
+  (format t "Resultado: ~A~%" function)
+  (format t "Melhor Nó: ~A~%" *jogada*)
 )
 
 
-
 (defun minmax-max (sucessores profundidade-max jogador-max)
-  (let ((result (max-value-recursive sucessores profundidade-max jogador-max (cons nil (list most-negative-fixnum)))))
-    (setf *jogada* (car result))
-    (cdr result)))
+  (max-value-recursive sucessores profundidade-max jogador-max most-negative-fixnum)); (cdr result)
 
 
-(defun max-value-recursive (sucessores profundidade-max jogador-max current-max-pair)
+(defun max-value-recursive (sucessores profundidade-max jogador-max current-max)
   (if (null sucessores)
-      current-max-pair
-      (let ((child-result (minmax (first sucessores) profundidade-max (not jogador-max))))
-        (if (> (cdr child-result) (cdr current-max-pair))
-            (max-value-recursive (rest sucessores) profundidade-max jogador-max child-result)
-            (max-value-recursive (rest sucessores) profundidade-max jogador-max current-max-pair)))))
+      current-max
+      (let ((child-result (minmax (first sucessores) profundidade-max jogador-max))
+             (profundidade (fifth (first sucessores)))) ;varriável para teste
+        (cond 
+          ((>= child-result current-max) 
+           (max-value-recursive (rest sucessores) profundidade-max jogador-max child-result))
+          (t 
+           (setf *jogada* (first sucessores))
+           (min-value-recursive (rest sucessores) profundidade-max jogador-max current-max))))))
 
 
 (defun minmax-min (sucessores profundidade-max jogador-max)
-  (let ((result (min-value-recursive sucessores profundidade-max jogador-max (cons nil (list most-positive-fixnum)))))
-    (setf *jogada* (car result))
-    (cdr result)))
+  (min-value-recursive sucessores profundidade-max jogador-max most-positive-fixnum)) ; (cdr result)
 
 
-(defun min-value-recursive (sucessores profundidade-max jogador-max current-min-pair)
+(defun min-value-recursive (sucessores profundidade-max jogador-max current-min)
   (if (null sucessores)
-      current-min-pair
-      (let ((child-result (minmax (first sucessores) profundidade-max (not jogador-max))))
-        (if (< (cdr child-result) (cdr current-min-pair))
-            (min-value-recursive (rest sucessores) profundidade-max jogador-max child-result)
-            (min-value-recursive (rest sucessores) profundidade-max jogador-max current-min-pair)))))
+      current-min
+      (let ((child-result (minmax (first sucessores) profundidade-max jogador-max))
+            (profundidade (fifth (first sucessores)))) ;variável para teste)
+        (cond 
+          ((<= child-result current-min) 
+           (min-value-recursive (rest sucessores) profundidade-max jogador-max child-result))
+          (t 
+           (setf *jogada* (first sucessores))
+           (min-value-recursive (rest sucessores) profundidade-max jogador-max current-min))))))
+
+
+;(alfa-beta (no-teste5) 3 *jogador1*)
+(defun alfa-beta (node profundidade-max jogador-max &optional (alfa most-negative-fixnum) (beta most-positive-fixnum) )
+  (let ((result (cond
+    ((or (eq (fifth node) profundidade-max) 
+         (null (successors node (get-operators) profundidade-max nil)))               ;Nó raiz ou folha
+                            (heuristic-minmax node))  ; (cons node (heuristic-minmax node)))   (heuristic-minmax node))
+    (t (let ((sucessores (successors node (get-operators) profundidade-max nil)))
+                         (cond
+                           ((eq (sixth node) jogador-max)                             ;Nó Max
+                                (alfa-beta-max sucessores profundidade-max jogador-max alfa beta))   
+                           (t                                                         ;Nó Min
+                                (alfa-beta-min sucessores profundidade-max jogador-max alfa beta)))))
+  )))
+  (format t "Profundidade: ~A~%" (fifth node))
+  (format t "Jogador: ~A~%" (sixth node))
+  (format t "Pontuação1: ~A~%" (first node))
+  (format t "Pontuação2: ~A~%" (second node))
+  (format t "Heurística: ~A~%" (heuristic-minmax node))
+  (format t "Melhor Nó: ~A~%" *jogada*)
+  (format t "Pai: ~A~%" (seventh node))
+  (printTable (fourth node))
+  (format t "\n")
+  result)
+)
+
+
+(defun alfa-beta-max (sucessores profundidade-max jogador-max alfa beta)
+  (if (null sucessores)
+      alfa
+      (let* ((child-result (alfa-beta (first sucessores) profundidade-max jogador-max alfa beta))
+             (profundidade (fifth (first sucessores))) ;varriável para teste
+             (novo-alfa (max alfa child-result)))
+        (cond 
+          ((>= novo-alfa beta) 
+              beta)
+          (t 
+           (setf *jogada* (first sucessores))
+           (max novo-alfa (alfa-beta-max (rest sucessores) profundidade-max jogador-max novo-alfa beta))))))
+)
+
+(defun alfa-beta-min (sucessores profundidade-max jogador-max alfa beta)
+  (if (null sucessores)
+      beta
+       (let* ((child-result (alfa-beta (first sucessores) profundidade-max jogador-max alfa beta))
+             (profundidade (fifth (first sucessores))) ;varriável para teste
+             (novo-beta (min beta child-result)))
+         (cond 
+           ((<= novo-beta alfa)      
+               alfa)
+           (t  
+            (setf *jogada* (first sucessores))
+            (min novo-beta (alfa-beta-min (rest sucessores) profundidade-max jogador-max alfa novo-beta))))))
+)
+
+;(alfa-beta-test (alfa-beta (no-teste5) 2 *jogador1*))
+;(alfa-beta-test (alfa-beta (no-teste5) 3 *jogador1*))
+(defun alfa-beta-test (function)
+  (format t "Resultado: ~A~%" function)
+  (format t "Melhor Nó: ~A~%" *jogada*)
+)
 
 #|
 
