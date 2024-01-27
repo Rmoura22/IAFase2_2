@@ -163,6 +163,8 @@ NÃ³ - (pontos posCavalo tabela profundidade pai heuristica)
 
 (defvar *maximum-value* 10000)
 (defvar *minimum-value* -10000)
+(defvar *cortes-alfa* 0)
+(defvar *cortes-beta* 0)
 
 ;; Nó -  (pontos1 pontos2 position1 table profundidade curJogador pai heuristica position2)
 
@@ -197,6 +199,8 @@ NÃ³ - (pontos posCavalo tabela profundidade pai heuristica)
 (defun minmax-test (function)
   (format t "Resultado: ~A~%" function)
   (format t "Melhor Nó: ~A~%" *jogada*)
+  (format t "Cortes Alfa: ~A~%" *cortes-alfa*)
+  (format t "Cortes Beta: ~A~%" *cortes-beta*)
 )
 
 
@@ -234,19 +238,10 @@ NÃ³ - (pontos posCavalo tabela profundidade pai heuristica)
            (min-value-recursive (rest sucessores) profundidade-max jogador-max current-min))))))
 
 
+
+
 ;(alfa-beta (no-teste5) 3 *jogador1*)
-(defun alfa-beta (node profundidade-max jogador-max &optional (alfa most-negative-fixnum) (beta most-positive-fixnum) )
-  (let ((result (cond
-    ((or (eq (fifth node) profundidade-max) 
-         (null (successors node (get-operators) profundidade-max nil)))               ;Nó raiz ou folha
-                            (heuristic-minmax node))  ; (cons node (heuristic-minmax node)))   (heuristic-minmax node))
-    (t (let ((sucessores (successors node (get-operators) profundidade-max nil)))
-                         (cond
-                           ((eq (sixth node) jogador-max)                             ;Nó Max
-                                (alfa-beta-max sucessores profundidade-max jogador-max alfa beta))   
-                           (t                                                         ;Nó Min
-                                (alfa-beta-min sucessores profundidade-max jogador-max alfa beta)))))
-  )))
+(defun alfa-beta (node profundidade-max jogador-max timestamps &optional (alfa *minimum-value*) (beta *maximum-value*) (stats '(0 0 0 0 0)))
   (format t "Profundidade: ~A~%" (fifth node))
   (format t "Jogador: ~A~%" (sixth node))
   (format t "Pontuação1: ~A~%" (first node))
@@ -254,45 +249,87 @@ NÃ³ - (pontos posCavalo tabela profundidade pai heuristica)
   (format t "Heurística: ~A~%" (heuristic-minmax node))
   (format t "Melhor Nó: ~A~%" *jogada*)
   (format t "Pai: ~A~%" (seventh node))
+  (format t "Nós gerados: ~A~%" (first stats))
+  (format t "Nós expandidos: ~A~%" (second stats))
+  (format t "Nós avaliados: ~A~%" (third stats))
+  (format t "Nós cortes-alfa: ~A~%" (fourth stats))
+  (format t "Nós cortes-beta: ~A~%" (fifth stats))
   (printTable (fourth node))
   (format t "\n")
+  (let* ((result (cond
+    ((or (eq (fifth node) profundidade-max)
+         (null node) 
+         (null (successors node (get-operators) profundidade-max nil))
+         (has-passed-90-percent (first timestamps) (second timestamps)))               ;Nó raiz ou folha
+                            (heuristic-minmax node))  ; (cons node (heuristic-minmax node)))   (heuristic-minmax node))
+    (t (let ((sucessores (order-nodes (successors node (get-operators) profundidade-max nil) (sixth node) jogador-max))) ; (ordenar (|# successors node (get-operators) profundidade-max nil #|) (sixth node) jogador-max)
+                         
+                         (cond
+                           ((eq (sixth node) jogador-max)                             ;Nó Max
+                                (alfa-beta-max sucessores profundidade-max 
+                                               jogador-max timestamps alfa beta (update-stats stats '(0 1 0 0 0))))   
+                           (t                                                         ;Nó Min
+                                (alfa-beta-min sucessores profundidade-max 
+                                               jogador-max timestamps alfa beta (update-stats stats '(0 1 0 0 0))))))
+  ))))
+  
   result)
 )
 
-
-(defun alfa-beta-max (sucessores profundidade-max jogador-max alfa beta)
+;;Caso de nó MAX
+;;Função retorna alfa se não houverem sucessores, 
+;;com sucessores a função verifica o máximo entre beta e o valor alfa do sucessor
+;;corta o ramo se beta for menor, caso contrário continua a seguir o ramo
+(defun alfa-beta-max (sucessores profundidade-max jogador-max timestamps alfa beta stats)
   (if (null sucessores)
       alfa
-      (let* ((child-result (alfa-beta (first sucessores) profundidade-max jogador-max alfa beta))
+      (let* ((child-result (alfa-beta (first sucessores) profundidade-max jogador-max timestamps alfa beta stats))
              (profundidade (fifth (first sucessores))) ;varriável para teste
              (novo-alfa (max alfa child-result)))
         (cond 
-          ((>= novo-alfa beta) 
+          ((> novo-alfa beta) 
+              (setf *cortes-alfa* (+ *cortes-alfa* 1))
+              (update-stats stats '(0 0 0 1 0))
               beta)
           (t 
            (setf *jogada* (first sucessores))
-           (max novo-alfa (alfa-beta-max (rest sucessores) profundidade-max jogador-max novo-alfa beta))))))
+           (max novo-alfa (alfa-beta-max (rest sucessores) profundidade-max 
+                                          jogador-max timestamps novo-alfa beta (update-stats stats '(0 0 1 0 0))))))))
 )
 
-(defun alfa-beta-min (sucessores profundidade-max jogador-max alfa beta)
+
+;;Caso de nó MIN
+;;Função retorna beta se não houverem sucessores, 
+;;com sucessores a função verifica o mínimo entre alfa e o valor beta do sucessor
+;;corta o ramo se alfa for maior, caso contrário continua a seguir o ramo
+(defun alfa-beta-min (sucessores profundidade-max jogador-max timestamps alfa beta stats)
   (if (null sucessores)
-      beta
-       (let* ((child-result (alfa-beta (first sucessores) profundidade-max jogador-max alfa beta))
+       beta 
+       (let* ((child-result (alfa-beta (first sucessores) profundidade-max jogador-max timestamps alfa beta stats))
              (profundidade (fifth (first sucessores))) ;varriável para teste
              (novo-beta (min beta child-result)))
          (cond 
-           ((<= novo-beta alfa)      
+           ((< novo-beta alfa)  
+               (setf *cortes-beta* (+ *cortes-beta* 1))
+               (update-stats stats '(0 0 0 0 1))    
                alfa)
            (t  
             (setf *jogada* (first sucessores))
-            (min novo-beta (alfa-beta-min (rest sucessores) profundidade-max jogador-max alfa novo-beta))))))
+            (min novo-beta (alfa-beta-min (rest sucessores) profundidade-max 
+                                           jogador-max timestamps alfa novo-beta (update-stats stats '(0 0 1 0 0))))))))
 )
 
+
+
 ;(alfa-beta-test (alfa-beta (no-teste5) 2 *jogador1*))
-;(alfa-beta-test (alfa-beta (no-teste5) 3 *jogador1*))
+;(alfa-beta-test (alfa-beta (no-teste5) 3 *jogador1* (list (get-internal-real-time) 5000))); 5 segundos
 (defun alfa-beta-test (function)
   (format t "Resultado: ~A~%" function)
   (format t "Melhor Nó: ~A~%" *jogada*)
+  (format t "Nós cortes-alfa: ~A~%" *cortes-alfa*)
+  (format t "Nós cortes-beta: ~A~%" *cortes-beta*)
+  (setf *cortes-alfa* 0)
+  (setf *cortes-beta* 0)
 )
 
 #|
@@ -323,6 +360,69 @@ NÃ³ - (pontos posCavalo tabela profundidade pai heuristica)
 ;(defun minmax-min (sucessores profundidade-max jogador-max))
 
 
+#|
+ ******************** Statistics ********************
+|#
+
+; stats: (nos-gerados nos-expandidos nos-avaliados cortes-alfa cortes-beta)
+(defun update-stats (stats values)
+  (mapcar #'(lambda (s v) (+ s v)) stats values)
+)
+
+(defun has-passed-90-percent (startTimestamp timeLimit)
+  "Check if at least 90% of the time has passed since the start timestamp."
+  (let* ((currentTime (get-internal-real-time)))
+    (>= (- currentTime startTimestamp) (* 0.9 timeLimit))
+  )
+)
+
+(defun ordenar-nos-alfa-beta (lista-de-nos jogador-max)
+  "Função para ordenar nós no Alfa-Beta com base no jogador (Max ou Min)."
+  (sort lista-de-nos
+        #'(lambda (a b)
+            (if (eql jogador-max 'Max) ; Verifique se o jogador atual é Max
+                (> (terceiro a) (terceiro b)) ; Ordene por valor decrescente
+                (< (terceiro a) (terceiro b)))))) ; Ordene por valor crescente
+
+
+(defun max-node-sort (nodes)
+  "Retorna uma lista de nós ordenados por heuristica decrescente"
+  (cond
+    ((null nodes) nil)
+    (t (let* ((min-node (find-min-node nodes))
+           (rest-nodes (remove min-node nodes)))
+      (append  (list min-node) (max-node-sort rest-nodes)
+             ))))
+)
+
+(defun find-max-node (nodes)
+  "Encontra o nó com melhor heuristica na lista de nós"
+  (reduce #'(lambda (a b)
+              (if (> (heuristic-minmax a) (heuristic-minmax b))
+                a
+                b))
+          nodes)
+)
+
+
+(defun min-node-sort (nodes)
+  "Retorna uma lista de nós ordenados por heuristica crescente"
+  (cond
+    ((null nodes) nil)
+    (t (let* ((max-node (find-max-node nodes))
+           (rest-nodes (remove max-node nodes)))
+      (append  (list max-node) (min-node-sort rest-nodes)
+             ))))
+)
+
+(defun find-min-node (nodes)
+  "Encontra o nó com pior heuristica na lista de nós"
+  (reduce #'(lambda (a b)
+              (if (< (heuristic-minmax a) (heuristic-minmax b))
+                a
+                b))
+          nodes)
+)
 
 
 
