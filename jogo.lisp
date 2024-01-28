@@ -1,23 +1,73 @@
+;Logic for the Knight Tour Project
 
-
-(defpackage "Logic")
-
-
-;;;;
-;;;; Constantes:
-;;;;
-(defvar *jogador1* -1)
-(defvar *jogador2* -2)
-(defvar *jogada* nil)
-
-
-
-;--------------------- OPERADORES -----------------------
-(defun trocar-jogador (jogador)
-  "Troca a peca de um jogador para a peca de outro jogador."
-  (- -3 jogador)
+(defun convert-to-alfa-beta-node (interacNode)
+"It was too hard to change everything to the same node architecture"
+  (list
+    (get-player-points (get-Node-CurPlayer interacNode))
+    (get-player-points (get-Node-NextPalyer interacNode))
+    (get-player-pos (get-Node-CurPlayer interacNode))
+    (get-Node-Table interacNode)
+    (get-Node-Depth interacNode)
+    *jogador1*
+    nil
+    nil
+    (get-player-pos (get-Node-NextPalyer interacNode))
+  )
 )
 
+(defun convert-to-interact-node (algoNode)
+"It was too hard to change everything to the same node architecture"
+  (list
+    (fourth algoNode)
+    (if (equal *jogador1* (sixth algoNode)) (list (third algoNode) (first algoNode)) (list (ninth algoNode) (second algoNode)))
+    (if (equal *jogador1* (sixth algoNode)) (list (ninth algoNode) (second algoNode)) (list (third algoNode) (first algoNode)))
+    (fifth algoNode)
+    nil
+    nil 
+  )
+)
+
+(defun invert-players (algoNode)
+  (list
+    (second algoNode)
+    (first algoNode)
+    (ninth algoNode)
+    (fourth algoNode)
+    (fifth algoNode)
+    (sixth algoNode)
+    nil
+    nil
+    (third algoNode)
+  )
+)
+
+(defun convert-all-to-alfa-beta-nodes (interacNodes)
+  (cond
+    ((null interacNodes) nil)
+    (t (cons (invert-players (convert-to-alfa-beta-node (car interacNodes))) (convert-all-to-alfa-beta-nodes (cdr interacNodes))))
+  )
+)
+
+
+(defun successors (node funcs)
+  (remove-if #'null (successors-rec node funcs))
+)
+
+(defun successors-rec (node funcs)
+  (cond 
+    ((null funcs) nil)
+    (t (insertOrderedDecHeuristic (apply (car funcs) (list node)) (successors-rec node (cdr funcs))))
+  )
+)
+
+(defun insertOrderedDecHeuristic (Node Nodes)
+ (cond 
+  ((null (car nodes)) (list Node))
+  ((null (sixth Node)) (append nodes (list Node)))
+  ((< (sixth Node) (sixth (car Nodes))) (cons Node Nodes))
+  (t (cons (first Nodes) (insertOrderedDecHeuristic Node (cdr Nodes))))
+ )
+)
 
 (defun get-operators ()
  (list
@@ -32,107 +82,90 @@
  )
 )
 
-(defun Operator1 (node &optional (heur nil))
-  (let ((posicao-jogador (if (eq (sixth node) -1) 
-                           (third node) 
-                           (ninth node))))
-  (move node (+ (horsePosLine posicao-jogador) 1) (+ (horsePosColumn posicao-jogador) 2) 'operator1 heur))
+(defun get-operator (line col)
+  
+  (if (equal line 1)
+    (case (+ line col)
+      (3 'Operator1)
+      (-1 'Operator2)
+      (-3 'Operator5)
+      (1 'Operator6)
+      (t nil)
+    )
+    (case (+ line col)
+      (3 'Operator3)
+      (1 'Operator4)
+      (-3 'Operator7)
+      (-1 'Operator8)
+      (t nil)
+    )
+  )
 )
 
-(defun Operator2 (node &optional (heur nil))
-  (let ((posicao-jogador (if (eq (sixth node) -1) 
-                           (third node) 
-                           (ninth node))))
-  (move node (+ (horsePosLine posicao-jogador) 1) (+ (horsePosColumn posicao-jogador) -2)'operator2 heur))
+(defun Operator1 (node)
+ (move node (+ (horsePosLine node) 1) (+ (horsePosColumn node) 2) 'operator1)
 )
 
-(defun Operator3 (node &optional (heur nil))
-  (let ((posicao-jogador (if (eq (sixth node) -1) 
-                           (third node) 
-                           (ninth node))))
-  (move node (+ (horsePosLine posicao-jogador) 2) (+ (horsePosColumn posicao-jogador) 1)'operator3 heur))
+(defun Operator2 (node)
+ (move node (+ (horsePosLine node) 1) (+ (horsePosColumn node) -2)'operator2)
 )
 
-(defun Operator4 (node &optional (heur nil))
-  (let ((posicao-jogador (if (eq (sixth node) -1) 
-                           (third node) 
-                           (ninth node))))
-  (move node (+ (horsePosLine posicao-jogador) 2) (+ (horsePosColumn posicao-jogador) -1)'operator4 heur))
+(defun Operator3 (node)
+ (move node (+ (horsePosLine node) 2) (+ (horsePosColumn node) 1)'operator3)
 )
 
-(defun Operator5 (node &optional (heur nil))
-  (let ((posicao-jogador (if (eq (sixth node) -1) 
-                           (third node) 
-                           (ninth node))))
-  (move node (+ (horsePosLine posicao-jogador) -1) (+ (horsePosColumn posicao-jogador) -2)'operator5 heur))
+(defun Operator4 (node)
+ (move node (+ (horsePosLine node) 2) (+ (horsePosColumn node) -1)'operator4)
 )
 
-(defun Operator6 (node &optional (heur nil))
-  (let ((posicao-jogador (if (eq (sixth node) -1) 
-                           (third node) 
-                           (ninth node))))
-  (move node (+ (horsePosLine posicao-jogador) -1) (+ (horsePosColumn posicao-jogador) 2)'operator6 heur))
+(defun Operator5 (node)
+ (move node (+ (horsePosLine node) -1) (+ (horsePosColumn node) -2)'operator5)
 )
 
-(defun Operator7 (node &optional (heur nil))
-  (let ((posicao-jogador (if (eq (sixth node) -1) 
-                           (third node) 
-                           (ninth node))))
-  (move node (+ (horsePosLine posicao-jogador) -2) (+ (horsePosColumn posicao-jogador) -1)'operator7 heur))
+(defun Operator6 (node)
+ (move node (+ (horsePosLine node) -1) (+ (horsePosColumn node) 2)'operator6)
 )
 
-(defun Operator8 (node &optional (heur nil))
-  (let ((posicao-jogador (if (eq (sixth node) -1) 
-                           (third node) 
-                           (ninth node))))
-  (move node (+ (horsePosLine posicao-jogador) -2) (+ (horsePosColumn posicao-jogador) 1)'operator8 heur))
+(defun Operator7 (node)
+ (move node (+ (horsePosLine node) -2) (+ (horsePosColumn node) -1)'operator7)
+)
+
+(defun Operator8 (node)
+ (move node (+ (horsePosLine node) -2) (+ (horsePosColumn node) 1)'operator8)
 )
 
 
+#|
+ ******************** Movement ********************
+|#
 
-
-;--------------------- Movimento -----------------------
-;; NÛ -  (pontos1 pontos2 position1 table profundidade jogador pai heuristica position2)
-(defun move (node line column name &optional (heur nil))
- (let ((points (cel (fourth node) line column)))
+(defun move (node line column name)
+ (let ((value (cel (first node) line column)))
   (cond
-   ((null points) nil)
-   (t (let ((newNode (list
-           (if (eq (sixth node) -1) 
-               (+ (first node)  points)
-               (first node)
-           )
-           (if (eq (sixth node) -2) 
-                (+ (second node)  points)
-                (second node)
-           ) 
-           (if (eq (sixth node) -1) 
-               (list line column)
-               (third node)
-           )
-           (removeOther (replaceInTableIndex (fourth node) line column (sixth node)) points)
-           (1+ (fifth node))
-           (trocar-jogador (sixth node))
-           (append (seventh node) (list name))
-           nil
-           (if (eq (sixth node) -2) 
-                (list line column)
-                (ninth node)
-           )
-         )))
-        (if (null heur) newNode (funcall heur newNode 400))
+   ((or (null value) (equal value 'WK) (equal value 'BK)) nil)
+   (t (list 
+        (removeOther (replaceInTableIndex (replaceInTableIndex (first node) (first (get-player-pos (get-node-curPlayer node))) (second (get-player-pos (get-node-curPlayer node)))) line column (cel (get-node-table node) (first (get-player-pos (get-node-curPlayer node))) (second (get-player-pos (get-node-curPlayer node))))) value)
+        (third node);invert cur with next
+        (upadate-player (second node) (list line column) value)
+        (1+(fourth node))
+        nil
+        nil
       )
    )
   )
  )
 )
 
+(defun upadate-player (player newPos points)
+  (list newPos (+ (second player) points))
+)
+
+
 (defun removeOther (table num)
-"Removes the oposite number or the highst dub"
-  (cond 
+"Remove o oposto ou maior duplo dependendo se o numero √© duplo."  
+(cond 
    ((doubleNumP num) (replaceInTable table (findHighstDubInTable table)))
    (t (replaceInTable table (reverseNum num)))
-
   )
 )
 
@@ -182,21 +215,22 @@
   "Encontra e retorna o maior n√∫mero duplo numa linha"
   (cond
     ((null lista) max-duplicate)
-    ((and (not (null (car lista))) (> (first lista) max-duplicate) (doubleNumP (first lista))) 
+    ((null (first lista)) (findHighstDubInList (cdr lista) max-duplicate))
+    ((and (numberp (car lista)) (> (first lista) max-duplicate) (doubleNumP (first lista)))
      (findHighstDubInList (cdr lista) (first lista)))
     (t (findHighstDubInList (cdr lista) max-duplicate))
   )
 )
 
 
-(defun horsePosLine (table)
- "Linha em que o cavalo se encontra dado uma tabela"
- (first table)
+(defun horsePosLine (node)
+ "Linha em que o cavalo se encontra dado um no"
+ (first (first (second node)))
 )
 
-(defun horsePosColumn (table)
- "Coluna em que o cavalo se encontra dado uma tabela"
- (second table)
+(defun horsePosColumn (node)
+ "Coluna em que o cavalo se encontra dado um no"
+ (second (first (second node)))
 )
 
 (defun cel (table line column)
@@ -207,67 +241,9 @@
 )
 
 
-;--------------------- Data Structure -----------------------
-
-
-;;RepresentaÁ„o de um nÛ
-; ContÈm ~ 1- Pontos do jogador 1
-;          2- Pontos do jogador 2 
-;          3- PosiÁ„o jogador1
-;          4- Tabuleiro 
-;          5- Profundidade 
-;          6- Jogador  
-;          7- Pai
-;          8- HeurÌstica
-;          9- PosiÁ„o jogador2
-(defun node (pontos1 pontos2 position1 table profundidade curjogador pai heuristica position2)
- (list pontos1 pontos2 position1 table profundidade curjogador pai heuristica position2)
-)
-
-
-(defun successors (node funcs &optional (maxDepth 100) (heur nil))
- (cond
-
-  ((null (third node)) (remove-if #'null (firstsuccessors node heur)))
-  ((> (1+ (fifth node)) maxdepth) nil)
-  (t (remove-if #'null (successors-rec node funcs maxdepth heur))
-  )
- )
-)
-
-(defun successors-rec (node funcs &optional (maxDepth 100) (heur nil))
- (cond
-  ((null funcs) nil)
-  (t
-   (cons (apply (car funcs) (list node heur)) (successors-rec node (cdr funcs) maxdepth heur))
-  )
- ) 
-)
-
-(defun firstSuccessors (node &optional (heur nil) (counter 0))
-"Generate the first nodes, for when there is no knight on the board"
- (cond 
-  ((= counter 9) (list (move node 0 counter 'firstsuccessors heur)))
-  (t (cons (move node 0 counter (list 0 counter) heur) (firstSuccessors node heur (1+ counter))))
- )
-)
-
-
-
-#|
- ******************** Heur√≠sticas ********************
-|#
-;; NÛ -  (pontos1 pontos2 position table profundidade jogador-max pai heuristica)
-(defun heuristic-minmax (node)
-  (- (first node) (second node))
-)
-
-
-
 #|
  ******************** Tests ********************
 |#
-
 
 (defun tabuleiro-teste1 ()
 "Tabuleiro de teste sem nenhuma jogada realizada"
@@ -301,32 +277,18 @@
    )
 )
 
-
-;; NÛ -  (pontos1 pontos2 position table profundidade jogador-max pai heuristica)
-
 (defun makeNode (table)
- (list 0 0 nil table 0 *jogador1* nil nil)
+ (list 0 nil table 0 nil nil)
 )
 
 (defun no-teste1 ()
-  (list 0 0 nil (tabuleiro-teste1) 0 *jogador1* nil nil)
+  (list 0 nil (tabuleiro-teste1) 0 nil 3)
 )
 
 (defun no-teste2 ()
-  (list 0 0 '(0 0) (tabuleiro-teste2) 0 *jogador1* nil 2)
+  (list 0 '(0 0) (tabuleiro-teste2) 0 nil 2)
 )
 
 (defun no-teste3 ()
   (list 12 '(1 2) (tabuleiro-teste2) 1 nil 1)
 )
-
-; (successors (no-teste4) (get-operators) 5)
-(defun no-teste4 ()
-  (list 0 0 '(0 0) (tabuleiro-teste2) 0 *jogador1* nil nil)
-)
-
-; (successors (no-teste5) (get-operators) 5)
-(defun no-teste5 ()
-  (list 0 0 '(0 0) (tabuleiro-teste2) 0 *jogador1* nil nil '(9 5))
-)
-
